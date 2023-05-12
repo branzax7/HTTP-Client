@@ -61,7 +61,7 @@ da si sa respecte format-ul campurilor. Pt. titlul unei carti accept si cifre in
 register sunt permise cifre.
     De asemenea cand sunt logat si se introduce o comanda noua de logat sterg accesul la biblioteca precedent pt. ca user-ul nou logat sa nu aiba acces la
 biblioteca user-ului precedent prin token = NULL.
-
+    in cazul unei comenzi care nu exsita os primesti mesajul "Comnada gresita!!!".
 
     
 
