@@ -59,6 +59,8 @@ numele autorului nu pot trimite cifre in el s.a.m.d.
     In cazul in care e incalcat format-ul unui camp atunci pe ecran user-ul o sa primeasca un mesaj de eroare orientativ, trebuind apoi sa reintroduca coman-
 da si sa respecte format-ul campurilor. Pt. titlul unei carti accept si cifre in nume deoarece pot avea de expl. "Morometii 2", la fel si in username la
 register sunt permise cifre.
+    De asemenea cand sunt logat si se introduce o comanda noua de logat sterg accesul la biblioteca precedent pt. ca user-ul nou logat sa nu aiba acces la
+biblioteca user-ului precedent prin token = NULL.
 
 
     

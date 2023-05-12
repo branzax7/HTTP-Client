@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
         {
             // salvez cookie de sesiune
             cookies[0] = c_login();
+            // blocheaza accesul la biblioteca in cazul in care ma loghez cu un nou user
             token = NULL;
         }
 
