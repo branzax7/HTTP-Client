@@ -1,0 +1,63 @@
+Tema 4
+Oprea Mihail 334CC
+
+    Pentru rezolvare temei m-am folosit in totalitate de cunstiintele dobandite in laboratorul 9, astfel pornind de la fisierele lab-ului 9 rezolvat in 
+timpul lab-ului, pe langa acestea adaugand in plus doar fisierle parson.c si parson.h pentru parsare de Json.
+    Am folosit parson.h pentru ca am lucrat in C si pentru ca am vrut sa-mi usurez munca, sa nu stau sa-mi creez eu de mana Json-urile sau sa extrag de mana
+datele din acestea. In plus in enunt era specificat ca e recomadat sa fie folosita o biblioteca speciala pt. parasre de json.
+    In fisierul requests.c am adaugat pentru functiile din laborator char *compute_get_request si char *compute_post_request inca un argument la final numit 
+char *token in care primesc token-ul ca string, primit de la server in raspuns dupa executarea comenzii enter_library cu succes. In cazul daca am token
+(token != NULL) atunci adaug ca linie in mesaj precedat de textul "Authorization: Bearer " pentru a aduga token-ul in mesajul pe care il trimite clientul la
+server prin sprintf(line, "Authorization: Bearer %s", token) pentru a adauga token-ul in header-ul Authorzation(asa acum ai proceda in postman).
+    O alta modifiacre in functia compute_get_request a fost pentru linia sprintf(line, "GET %s/%s HTTP/1.1", url, query_params); unde in loc de %s/%s aveam
+%s&%s, doar ca am inlocuit '&' cu '/' pentru ca in cazul in care rulez comanda get_book, trebuie adaugat un id in continuarea url-ului, desparit cu un '/' asa
+cum e in exemplu: /api/v1/tema/library/books/123, "123" fiind data lui compute_get_request in param. char *query_params.
+    Ultima modifiacare facuta fisierului requests.c a fost adaugarea functiei char *compute_delete_request care are aceleasi argumente si acealsi corp ca
+functia compute_get_request doar in loc de cerere de GET fac cerere de DELETE, lucru realizat prin schimnbarea GET-ului cu DELETE pt. liniile 
+sprintf(line, "GET %s/%s HTTP/1.1", url, query_params) si sprintf(line, "GET %s HTTP/1.1", url).
+    De asemenea, am facut si modificarile necesare in requests.h.(pt adugarea functiei de compute_delete_request si modifiacarea antetlor celoralate 2
+functii).
+    In fisierul client.c am facaut rezolvarea propiu zisa a temei. In main am un while(1) in care citesc fiecare comanda de la tastaura prin
+fgets(command, 100, stdin) si dupa verific daca e o comanada valida prin multiple if-uti si strcmp. Iar pentru fiecare comanda mi-am facut o functie cu nume
+sugestiv, de exemplu daca strcmp(command, "register") == 0 atunci sunt in comanda register si apelez functia c_register si tot asa. Functiile sunt formate
+din numlele comenzii la care se mai aduaga un "c_" in fata de la comanada. Deoarece folosesc fgets pentru a obtine comenziile/input-ul de la tastatura, dupa
+fiecare apel fgets apelez command[strcspn(command, "\n")] = '\0'; pentru eliminarea new line-ului.
+    Tot in main pe langa char command[100] mai ma declarat char *cookies[] = {} si char *token = NULL. In principiu functiile pentru fiecare comanda in parte 
+sunt usor de inteles si o sa le explic pe scurt.
+    Daca am comanda register apelez doar functia void c_register() unde astept de la tastatura username si parola pe care le dau in formatul necesar ca para-
+metru lui compute_post_request pentru char** body_data cu host-ul, content_type-ul si url reprezentativ lui register. Dupa daca in functie de codul primit de 
+la server, afisez un mesaj reprezentativ. De exemplu daca server-ul intoarce in raspuns "HTTP/1.1 201" inseamna ca user-ul a fost creat cu succes, iar daca a 
+intors "HTTP/1.1 400" inseamna ca user-ul e deja luat. Pentru a verifica daca exista acest text in raspuns folosesc strstr. De asemenea ma verificat si daca 
+pun cumva spatii in username, lucru ce va afisa un mesaj de eroare, urmat de iseirea din functia c_register, astfel fiind necesar sa dai din nou comada 
+register in
+cazul in care doresti sa te inregistrezi.
+    Pt. comanda login apelez functia char *c_login() care intoarce un cookie care e daugat in cookies prin cookies[0] = c_login() pt. a salva cookie-ul.
+Cookie-ul mi-l obtin din response = receive_from_server(sockfd) in cazul in care a fost intors "HTTP/1.1 200".
+    Pt. comanda enter_library apelez functia char *c_enter_library(char **cookies) cu cookie-ul obtinut inainte. Daca raspunsul e pozitiv atunci obtin json-
+ul din raspuns prin functia char *get_json_from_response(char *str) prin apelul char *jwt = get_json_from_response(response) sub forma de string. Dupa obtin
+token-ul din json prin folosirea biblotecii parson.h, pe care il returnez pt a-l salva in varaibila char *token din main.
+    Pt. comenziile de get_books, get_book, add_book si delete_book am apelat doar functiile reprezentative doar cu argumentul char *token din main deoarece,
+aceste comenzi functioneaza doar daca ai acces la biblioteca, lucru realizat prin adaugarea parametrului char *token in metodele de compute, nemaicontand
+cookie-ul de sesiune. Puteam sa trimit si cookie-ul de sesiune pt. aceste comenzi dar mi s-a paut inutil.
+    Pt. comanda add_book mi-am creat json-ul sub forma caruia se scrie in postman in body folosind functii din parson.h si l-am trimis ca argumentul pt. 
+char **body_data in compute_post_request.
+    In comanda get_books folosesc functia char *get_array_from_response(char *str) pentru in caz de succes get_books intoarce un array de json-uri, pe care
+il slavez in char *carti, pe care dupa il parsez cu parson.h pentru a-l afisa intr-un format mai usor de citit in cazul in care user-ul intoduce comadna
+get-books. Acelasi lucru il fac si pt. comanda get_book doar ca e pentru un json, nu array de json-uri.
+    Functia char *get_json_from_response(char *str) o folosesc pentru a mi gasi in raspuns stringul de forma "{...}" folosind strstr pentru a-mi obine ce e 
+inauntrul parantezelor si strndup pt. a imi intoarce si parantezele, ca sa le pot parsa dupa cu parson.h.
+    Functia char *get_array_from_response(char *str) are cod similar cu get_json_from_response doar ca intoarce string-ul de forma "[...]" din raspuns.
+    Pt. comanda logout pe langa apelul functiei void c_logout(char **cookies) (logout-ul se face pe baza cookie-ul de sesiune) am ca urmatoare linie in if
+token = NULL pentru a sterge accesul la biblioteca.
+    In toate functiile de mai sus folosesc o functie de computte corespunzatoare cu url-ul si content_type-ul(daca am post) specific asa cum se vede pe cod.
+Pe langa asta afisez mesaje corespunzatoare in functie de codul http intors de raspuns asa cum am explicat pt. comanda register.
+    Functia int is_numeric(char *str) am folosit-o pentru a verifca daca un string reprezinta un numar, folosita pentru atunci cand introduc id-ul pentru a
+sterge, obtine o carte deaorece id-ul trebuie sa fie un numar pozitiv. L-am mai folosit si pt. cand adaug o carte pt. page_count.
+    Functia int contains_digits(char *str) am folosit-o pt. anumite campuri care nu au voie sa contina cifre. De exemplu, cand adaug o carte cand mi se cere
+numele autorului nu pot trimite cifre in el s.a.m.d.
+    In cazul in care e incalcat format-ul unui camp atunci pe ecran user-ul o sa primeasca un mesaj de eroare orientativ, trebuind apoi sa reintroduca coman-
+da si sa respecte format-ul campurilor.
+
+
+    
+

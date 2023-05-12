@@ -14,7 +14,7 @@
 void c_register();
 char *c_login();
 char *c_enter_library(char **cookies);
-void c_get_books(char *token, char **cookies);
+void c_get_books(char *token);
 void c_get_book(char *token);
 void c_add_book(char *token);
 void c_logout(char **cookies);
@@ -26,10 +26,6 @@ int contains_digits(char *str);
 
 int main(int argc, char *argv[])
 {
-    char *message;
-    char *response;
-    int sockfd;
-
     char *cookies[] = {};
     char *token = NULL;
 
@@ -37,7 +33,6 @@ int main(int argc, char *argv[])
     while (1)
     {
         fgets(command, 100, stdin);
-        // printf("You entered: %s", command);
         command[strcspn(command, "\n")] = '\0';
         if (strcmp(command, "register") == 0)
         {
@@ -58,7 +53,7 @@ int main(int argc, char *argv[])
 
         else if (strcmp(command, "get_books") == 0)
         {
-            c_get_books(token, cookies);
+            c_get_books(token);
         }
 
         else if (strcmp(command, "get_book") == 0)
@@ -128,12 +123,9 @@ void c_register()
     char *param1[] = {user, passwd};
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_post_request("34.254.242.81:8080", "/api/v1/tema/auth/register", "application/x-www-form-urlencoded", param1, 2, NULL, 0, NULL);
-    // puts("Mesaj:--------------------------");
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts("Response:------------------------");
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 201") != NULL)
     {
         puts("201-Created-Contul a fost inregistrat!");
@@ -198,7 +190,7 @@ char *c_enter_library(char **cookies)
     char *jwt = get_json_from_response(response);
     JSON_Value *root_value = json_parse_string(jwt);
     JSON_Object *root_object = json_value_get_object(root_value);
-    const char *token = json_object_dotget_string(root_object, "token");
+    char *token = json_object_dotget_string(root_object, "token");
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Accesare biblioteca cu succes!");
@@ -245,14 +237,14 @@ char *get_array_from_response(char *str)
     return NULL;
 }
 
-void c_get_books(char *token, char **cookies)
+void c_get_books(char *token)
 {
     char *message;
     char *response;
     int sockfd;
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
-    message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/library/books", NULL, cookies, 1, token);
+    message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/library/books", NULL, NULL, 0, token);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
 
@@ -465,7 +457,7 @@ int is_numeric(char *str)
     char *endptr;
     errno = 0;
 
-    long int val = strtol(str, &endptr, 10);
+    strtol(str, &endptr, 10);
 
     if (errno != 0 || *endptr != '\0' || str == endptr)
     {
