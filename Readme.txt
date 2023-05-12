@@ -48,7 +48,8 @@ get-books. Acelasi lucru il fac si pt. comanda get_book doar ca e pentru un json
 inauntrul parantezelor si strndup pt. a imi intoarce si parantezele, ca sa le pot parsa dupa cu parson.h.
     Functia char *get_array_from_response(char *str) are cod similar cu get_json_from_response doar ca intoarce string-ul de forma "[...]" din raspuns.
     Pt. comanda logout pe langa apelul functiei void c_logout(char **cookies) (logout-ul se face pe baza cookie-ul de sesiune) am ca urmatoare linie in if
-token = NULL pentru a sterge accesul la biblioteca.
+token = NULL pentru a sterge accesul la biblioteca. Nu golesc si cookie-ul salvat deoarece e inutil. Daca dai logout si dupa enter_library, care se face doar
+prin cookie-ul de sesiune nu o sa mearga chiar daca il mai retin pe cel vechi deci d-aia e inutil. Cand te loghezi din nou o sa fie updatat cu cel nou.
     In toate functiile de mai sus folosesc o functie de computte corespunzatoare cu url-ul si content_type-ul(daca am post) specific asa cum se vede pe cod.
 Pe langa asta afisez mesaje corespunzatoare in functie de codul http intors de raspuns asa cum am explicat pt. comanda register.
     Functia int is_numeric(char *str) am folosit-o pentru a verifca daca un string reprezinta un numar, folosita pentru atunci cand introduc id-ul pentru a
@@ -56,7 +57,8 @@ sterge, obtine o carte deaorece id-ul trebuie sa fie un numar pozitiv. L-am mai 
     Functia int contains_digits(char *str) am folosit-o pt. anumite campuri care nu au voie sa contina cifre. De exemplu, cand adaug o carte cand mi se cere
 numele autorului nu pot trimite cifre in el s.a.m.d.
     In cazul in care e incalcat format-ul unui camp atunci pe ecran user-ul o sa primeasca un mesaj de eroare orientativ, trebuind apoi sa reintroduca coman-
-da si sa respecte format-ul campurilor.
+da si sa respecte format-ul campurilor. Pt. titlul unei carti accept si cifre in nume deoarece pot avea de expl. "Morometii 2", la fel si in username la
+register sunt permise cifre.
 
 
     

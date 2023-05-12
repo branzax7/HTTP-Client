@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
 
         else if (strcmp(command, "login") == 0)
         {
+            // salvez cookie de sesiune
             cookies[0] = c_login();
-            // printf("Cookie::>>%s\n", cookies[0]);
             token = NULL;
         }
 
@@ -187,22 +187,23 @@ char *c_enter_library(char **cookies)
     message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/library/access", NULL, cookies, 1, NULL);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    char *jwt = get_json_from_response(response);
-    JSON_Value *root_value = json_parse_string(jwt);
-    JSON_Object *root_object = json_value_get_object(root_value);
-    char *token = json_object_dotget_string(root_object, "token");
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Accesare biblioteca cu succes!");
+        char *jwt = get_json_from_response(response);
+        JSON_Value *root_value = json_parse_string(jwt);
+        JSON_Object *root_object = json_value_get_object(root_value);
+        const char *token = json_object_dotget_string(root_object, "token");
+        return (char *)token;
     }
     if (strstr(response, "HTTP/1.1 401") != NULL)
     {
         puts("401-Unauthorized-Nu sunteti logat!");
     }
-    return token;
+    return NULL;
 }
 
-// de mutat??
 char *get_json_from_response(char *str)
 {
     char *start = strstr(str, "{\"");
@@ -253,7 +254,7 @@ void c_get_books(char *token)
         puts("200-OK");
         char *carti = get_array_from_response(response);
         JSON_Value *root_value = json_parse_string(carti);
-        JSON_Array *array = json_value_get_array(root_value);
+        json_value_get_array(root_value);
         char *pretty_array = json_serialize_to_string_pretty(root_value);
         printf("%s\n", pretty_array);
     }
@@ -327,8 +328,6 @@ void c_add_book(char *token)
     json_object_set_number(root_object, "page_count", atoi(page_count));
 
     char *json_string = json_serialize_to_string_pretty(root_value);
-    printf("ADAUG:\n%s\n", json_string);
-
     char *body_data[] = {json_string};
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
@@ -356,9 +355,16 @@ void c_get_book(char *token)
     printf("id=");
     fgets(id, 10, stdin);
     id[strcspn(id, "\n")] = '\0';
+
     if (is_numeric(id) == 0)
     {
         puts("Eroare: Id-ul trebuie sa reprezinte un numar");
+        return;
+    }
+
+    if (atoi(id) < 0)
+    {
+        puts("Eroare: Id-ul nu poate fi un numar negativ!");
         return;
     }
 
