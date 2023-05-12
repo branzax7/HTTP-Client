@@ -1,0 +1,20 @@
+Tema 4
+Oprea Mihail 334CC
+
+    Pentru rezolvare temei m-am folosit in totalitate de cunstiintele dobandite in laboratorul 9, astfel pornind de la fisierele lab-ului 9 rezolvat in 
+timpul lab-ului, pe langa acestea adaugand in plus doar fisierle parson.c si parson.h pentru parsare de Json.
+    Am folosit parson.h pentru ca am lucrat in C si pentru ca am vrut sa-mi usurez munca, sa nu stau sa-mi creez eu de mana Json-urile sau sa extrag datele
+din acestea. In plus in enunt era specificat ca e recomadat sa fie folosita o biblioteca speiala pt. parasre de json.
+    In fisierul requests.c am adaugat pentru functiile din laborator char *compute_get_request si char *compute_post_request inca un argument la final numit 
+char *token in care primesc token-ul ca string, primit de la server in raspuns dupa executarea comenzii enter_library cu succes. In cazul daca am token
+(token != NULL) atunci adaug ca linie in mesaj precedat de textul "Authorization: Bearer " pentru a aduga token-ul in mesajul pe care il trimite clientul la
+server prin sprintf(line, "Authorization: Bearer %s", token) pentru a adauga token-ul in header-ul Authorzation(asa acum ai proceda in postman).
+    O alta modifiacre in functia compute_get_request a fost pentru linia sprintf(line, "GET %s/%s HTTP/1.1", url, query_params); unde in loc de %s/%s aveam
+%s&%s, doar ca am inlocuit '&' cu '/' pentru ca in cazul in care rulez comanda get_book, trebuie adaugat un id in continuarea url-ului, desparit cu un '/' asa
+cum e in exemplu: /api/v1/tema/library/books/123, "123" fiind data lui compute_get_request in param. char *query_params.
+    Ultima modifiacare facuta fisierului requests.c a fost adaugarea functiei char *compute_delete_request care are aceleasi argumente si acealsi corp ca
+functia compute_get_request doar in loc de cerere de GET fac cerere de DELETE, lucru realizat prin schimnbarea GET-ului cu DELETE pt. liniile sprintf(line, "GET %s/%s HTTP/1.1", url, query_params) si sprintf(line, "GET %s HTTP/1.1", url).
+    De asemenea, am facut si modificarile necesare in requests.h.(pt adugarea functiei de compute_delete_request si modifiacarea antetlor celoralate 2
+functii).
+    
+

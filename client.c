@@ -123,12 +123,7 @@ void c_register()
     strcat(user, username);
     strcat(passwd, password);
 
-    // printf("user:%s\n", user);
-    // printf("passs:%s\n", passwd);
-
     int sockfd;
-    // scanf("username=%s\n", username);
-    // scanf("password=%s\n", password);
 
     char *param1[] = {user, passwd};
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
@@ -167,20 +162,14 @@ char *c_login()
     strcat(user, username);
     strcat(passwd, password);
 
-    // printf("user:%s\n", user);
-    // printf("passs:%s\n", passwd);
-
     int sockfd;
 
     char *param1[] = {user, passwd};
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_post_request("34.254.242.81:8080", "/api/v1/tema/auth/login", "application/x-www-form-urlencoded", param1, 2, NULL, 0, NULL);
-    // puts("Mesaj:--------------------------");
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts("Response:------------------------");
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Bun venit!");
@@ -204,12 +193,9 @@ char *c_enter_library(char **cookies)
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/library/access", NULL, cookies, 1, NULL);
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts(response);
     char *jwt = get_json_from_response(response);
-    // printf("+++++>>>%s\n", jwt);
     JSON_Value *root_value = json_parse_string(jwt);
     JSON_Object *root_object = json_value_get_object(root_value);
     const char *token = json_object_dotget_string(root_object, "token");
@@ -235,12 +221,10 @@ char *get_json_from_response(char *str)
         {
             int len = end - start + 1;
             char *token = strndup(start, len);
-            // printf("Token: %s\n", token);
             return token;
             free(token);
         }
     }
-    printf("Json not found.\n");
     return NULL;
 }
 
@@ -254,12 +238,10 @@ char *get_array_from_response(char *str)
         {
             int len = end - start + 1;
             char *token = strndup(start, len);
-            // printf("Token: %s\n", token);
             return token;
             free(token);
         }
     }
-    printf("Array not found.\n");
     return NULL;
 }
 
@@ -271,10 +253,9 @@ void c_get_books(char *token, char **cookies)
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/library/books", NULL, cookies, 1, token);
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK");
@@ -284,13 +265,13 @@ void c_get_books(char *token, char **cookies)
         char *pretty_array = json_serialize_to_string_pretty(root_value);
         printf("%s\n", pretty_array);
     }
+
     if (strstr(response, "HTTP/1.1 403") != NULL)
     {
         puts("403-Forbidden-Nu aveti acces la biblioteca!");
     }
 }
 
-// de adaugat si cookie-ul!!!!
 void c_add_book(char *token)
 {
     char *message;
@@ -304,11 +285,9 @@ void c_add_book(char *token)
     char page_count[10];
 
     printf("title=");
-    // scanf("%s", title);
     fgets(title, 100, stdin);
     title[strcspn(title, "\n")] = '\0';
     printf("author=");
-    // scanf("%s", author);
     fgets(author, 100, stdin);
     author[strcspn(author, "\n")] = '\0';
     if (contains_digits(author))
@@ -317,7 +296,6 @@ void c_add_book(char *token)
         return;
     }
     printf("genre=");
-    // scanf("%s", genre);
     fgets(genre, 100, stdin);
     genre[strcspn(genre, "\n")] = '\0';
     if (contains_digits(genre))
@@ -326,7 +304,6 @@ void c_add_book(char *token)
         return;
     }
     printf("publisher=");
-    // scanf("%s", publisher);
     fgets(publisher, 100, stdin);
     publisher[strcspn(publisher, "\n")] = '\0';
     if (contains_digits(publisher))
@@ -339,7 +316,12 @@ void c_add_book(char *token)
     page_count[strcspn(page_count, "\n")] = '\0';
     if (is_numeric(page_count) == 0)
     {
-        puts("Eroare: Id-ul trebuie sa reprezinte un numar");
+        puts("Eroare: Numarul de pagini trebuie sa reprezinte un numar");
+        return;
+    }
+    if (atoi(page_count) < 0)
+    {
+        puts("Eroare: Numarul de pagini nu poate fi negativ!");
         return;
     }
 
@@ -359,10 +341,9 @@ void c_add_book(char *token)
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_post_request("34.254.242.81:8080", "/api/v1/tema/library/books", "application/json", body_data, 1, NULL, 0, token);
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Carte adaugata cu succes!");
@@ -391,10 +372,9 @@ void c_get_book(char *token)
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/library/books", id, NULL, 0, token);
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Carte gasita cu succes!");
@@ -403,10 +383,12 @@ void c_get_book(char *token)
         char *pretty_json = json_serialize_to_string_pretty(root_value);
         printf("%s\n", pretty_json);
     }
+
     if (strstr(response, "HTTP/1.1 404") != NULL)
     {
         puts("404-Not Found-Nu exista carte cu acest id!");
     }
+
     if (strstr(response, "HTTP/1.1 403") != NULL)
     {
         puts("403-Forbidden-Nu aveti acces la biblioteca!");
@@ -421,10 +403,9 @@ void c_logout(char **cookies)
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_get_request("34.254.242.81:8080", "/api/v1/tema/auth/logout", NULL, cookies, 1, NULL);
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Deconectare efectuata cu succes!");
@@ -445,26 +426,34 @@ void c_delete_book(char *token)
     printf("id=");
     fgets(id, 10, stdin);
     id[strcspn(id, "\n")] = '\0';
+
     if (is_numeric(id) == 0)
     {
-        puts("Eroare: Id-ul trebuie sa reprezinte un numar");
+        puts("Eroare: Id-ul trebuie sa reprezinte un numar!");
+        return;
+    }
+
+    if (atoi(id) < 0)
+    {
+        puts("Eroare: Id-ul nu poate fi un numar negativ!");
         return;
     }
 
     sockfd = open_connection("34.254.242.81", 8080, AF_INET, SOCK_STREAM, 0);
     message = compute_delete_request("34.254.242.81:8080", "/api/v1/tema/library/books", id, NULL, 1, token);
-    // puts(message);
     send_to_server(sockfd, message);
     response = receive_from_server(sockfd);
-    // puts(response);
+
     if (strstr(response, "HTTP/1.1 200") != NULL)
     {
         puts("200-OK-Carte stearsa cu succes!");
     }
+
     if (strstr(response, "HTTP/1.1 404") != NULL)
     {
         puts("404-Not Found-Nu exista carte cu acest id!");
     }
+
     if (strstr(response, "HTTP/1.1 403") != NULL)
     {
         puts("403-Forbidden-Nu aveti acces la biblioteca!");
