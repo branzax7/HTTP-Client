@@ -1,45 +1,95 @@
 Http Client
 Oprea Mihail 334CC
 
-   For solving the assignment, I relied entirely on the knowledge gained in Lab 9. Starting from the files from Lab 9, which I resolved during the lab, I only added the parson.c and parson.h files for JSON parsing. I used parson.h because I worked in C and wanted to simplify my task, avoiding manual creation of JSONs or extracting data from them manually. Additionally, the prompt specified that it is recommended to use a special library for JSON parsing.
+For solving the assignment, I relied entirely on the knowledge gained in Lab 9. Starting from the files from
+Lab 9, which I resolved during the lab, I only added the parson.c and parson.h files for JSON parsing. I used
+parson.h because I worked in C and wanted to simplify my task, avoiding manual creation of JSONs or extracting
+data from them manually. Additionally, the prompt specified that it is recommended to use a special library
+for JSON parsing.
 
-In the requests.c file, I added an additional argument called char *token to the functions char *compute_get_request and char *compute_post_request, where I receive the token as a string from the server in response to the successful execution of the enter_library command. If I have a token (i.e., token != NULL), I add a line to the message preceded by the text "Authorization: Bearer " to include the token in the message sent from the client to the server via sprintf(line, "Authorization: Bearer %s", token), to include the token in the Authorization header (just as you would do in Postman).
+In the requests.c file, I added an additional argument called char *token to the functions char
+*compute_get_request and char *compute_post_request, where I receive the token as a string from the server
+in response to the successful execution of the enter_library command. If I have a token (i.e., token != NULL),
+I add a line to the message preceded by the text "Authorization: Bearer " to include the token in the message
+sent from the client to the server via sprintf(line, "Authorization: Bearer %s", token), to include the token
+in the Authorization header (just as you would do in Postman).
 
-Another modification in the compute_get_request function was the line sprintf(line, "GET %s/%s HTTP/1.1", url, query_params); where I replaced %s/%s with %s&%s, changing '&' to '/' because when I run the get_book command, an ID must be added to the end of the URL, separated by a '/', as shown in the example: /api/v1/tema/library/books/123, with "123" being the parameter given to compute_get_request in char *query_params.
+Another modification in the compute_get_request function was the line sprintf(line, "GET %s/%s HTTP/1.1", url,
+query_params); where I replaced %s/%s with %s&%s, changing '&' to '/' because when I run the get_book command,
+an ID must be added to the end of the URL, separated by a '/', as shown in the example:
+/api/v1/tema/library/books/123, with "123" being the parameter given to compute_get_request in char
+*query_params.
 
-**The last modification made in the requests.c file was the addition of the function char *compute_delete_request, which has the same arguments and body as the compute_get_request function, but instead of a GET request, it makes a DELETE request by changing GET to DELETE in the lines sprintf(line, "GET %s/%s HTTP/1.1", url, query_params) and sprintf(line, "GET %s HTTP/1.1", url).
+**The last modification made in the requests.c file was the addition of the function char
+*compute_delete_request, which has the same arguments and body as the compute_get_request function, but
+instead of a GET request, it makes a DELETE request by changing GET to DELETE in the lines sprintf(line,
+"GET %s/%s HTTP/1.1", url, query_params) and sprintf(line, "GET %s HTTP/1.1", url).
+I also made the necessary changes in requests.h (to add the compute_delete_request function and modify the
+headers of the other two functions).
 
-I also made the necessary changes in requests.h (to add the compute_delete_request function and modify the headers of the other two functions).
+In the client.c file, I implemented the actual solution for the assignment. In main, I have a while(1) loop
+where I read each command from the keyboard using fgets(command, 100, stdin) and then check if it is a valid
+command using multiple if statements and strcmp. For each command, I created a function with a descriptive
+name; for example, if strcmp(command, "register") == 0, I am in the register command and call the c_register
+function, and so on. The functions are named with the command name prefixed by c_. Because I use fgets to
+get commands/input from the keyboard, after each call to fgets, I call command[strcspn(command, "\n")] = '\0';
+to remove the newline character.
 
-In the client.c file, I implemented the actual solution for the assignment. In main, I have a while(1) loop where I read each command from the keyboard using fgets(command, 100, stdin) and then check if it is a valid command using multiple if statements and strcmp. For each command, I created a function with a descriptive name; for example, if strcmp(command, "register") == 0, I am in the register command and call the c_register function, and so on. The functions are named with the command name prefixed by c_. Because I use fgets to get commands/input from the keyboard, after each call to fgets, I call command[strcspn(command, "\n")] = '\0'; to remove the newline character.
+Also in main, besides char command[100], I declared char *cookies[] = {} and char *token = NULL. The functions
+for each command are straightforward, and I will explain them briefly.
+If I have the register command, I simply call the void c_register() function, where I wait for the username
+and password from the keyboard, which I provide in the required format as parameters to compute_post_request
+for char **body_data with the host, content type, and URL representative of the register command. Based on
+the code returned by the server, I display a representative message. For example, if the server returns
+"HTTP/1.1 201", it means the user was created successfully, while "HTTP/1.1 400" means the username is
+already taken. To check for this text in the response, I use strstr. I also check if I accidentally put
+spaces in the username, which would display an error message, followed by exiting the c_register function,
+thus requiring you to enter the register command again if you wish to register.
+For the login command, I call the char *c_login() function, which returns a cookie that is added to cookies
+via cookies[0] = c_login() to save the cookie. I obtain the cookie from response = receive_from_server(sockfd)
+if it returned "HTTP/1.1 200".
 
-Also in main, besides char command[100], I declared char *cookies[] = {} and char *token = NULL. The functions for each command are straightforward, and I will explain them briefly.
+For the enter_library command, I call the function char *c_enter_library(char **cookies) with the previously
+obtained cookie. If the response is positive, I obtain the JSON from the response using the function char
+*get_json_from_response(char *str) through the call char *jwt = get_json_from_response(response) as a string.
+I then extract the token from the JSON using the parson.h library, which I return to save in the char *token
+variable in main.
 
-If I have the register command, I simply call the void c_register() function, where I wait for the username and password from the keyboard, which I provide in the required format as parameters to compute_post_request for char **body_data with the host, content type, and URL representative of the register command. Based on the code returned by the server, I display a representative message. For example, if the server returns "HTTP/1.1 201", it means the user was created successfully, while "HTTP/1.1 400" means the username is already taken. To check for this text in the response, I use strstr. I also check if I accidentally put spaces in the username, which would display an error message, followed by exiting the c_register function, thus requiring you to enter the register command again if you wish to register.
+For the get_books, get_book, add_book, and delete_book commands, I only called the representative functions
+with the char *token argument from main, as these commands only work if you have access to the library, which
+is achieved by adding the char *token parameter to the methods, regardless of the session cookie. I could have
+sent the session cookie for these commands, but it seemed unnecessary.
+For the add_book command, I created the JSON in the format written in Postman in the body using functions
+from parson.h and sent it as an argument for char **body_data in compute_post_request.
 
-For the login command, I call the char *c_login() function, which returns a cookie that is added to cookies via cookies[0] = c_login() to save the cookie. I obtain the cookie from response = receive_from_server(sockfd) if it returned "HTTP/1.1 200".
+In the get_books command, I use the function char *get_array_from_response(char *str) because in case of
+success, get_books returns an array of JSONs, which I save in char *carti, which I then parse with parson.h
+to display in a more readable format if the user enters the get-books command. I do the same for the get_book
+command, but it is for a single JSON, not an array of JSONs.
+I use the function char *get_json_from_response(char *str) to find the string of the form "{...}" in the
+response using strstr to obtain what is inside the brackets and strndup to also return the brackets, so I can
+parse them later with parson.h. The function char *get_array_from_response(char *str) has similar code to
+get_json_from_response, but it returns the string of the form "[...]" from the response.
+For the logout command, besides calling the function void c_logout(char **cookies) (logging out is based on
+the session cookie), I have the next line in the if statement token = NULL to revoke access to the library.
 
-For the enter_library command, I call the function char *c_enter_library(char **cookies) with the previously obtained cookie. If the response is positive, I obtain the JSON from the response using the function char *get_json_from_response(char *str) through the call char *jwt = get_json_from_response(response) as a string. I then extract the token from the JSON using the parson.h library, which I return to save in the char *token variable in main.
+I do not clear the saved cookie because it is unnecessary. If you log out and then enter the library again,
+which is only done through the session cookie, it will not work even if I retain the old one, so it is
+unnecessary. When you log in again, it will be updated with the new one.
+In all the above functions, I use a corresponding compute function with the specified URL and content type
+(if POST), as shown in the code. Additionally, I display corresponding messages based on the HTTP code
+returned in the response, as explained for the register command.
+I used the function int is_numeric(char *str) to verify if a string represents a number, used when entering
+the ID to delete or obtain a book because the ID must be a positive number. I also used it when adding a
+book for the page_count.
 
-For the get_books, get_book, add_book, and delete_book commands, I only called the representative functions with the char *token argument from main, as these commands only work if you have access to the library, which is achieved by adding the char *token parameter to the methods, regardless of the session cookie. I could have sent the session cookie for these commands, but it seemed unnecessary.
+I used the function int contains_digits(char *str) for certain fields that cannot contain digits. For
+example, when adding a book, the author's name cannot contain digits, etc.
+If the format of a field is violated, the user will receive a guiding error message on the screen, having
+to re-enter the command and adhere to the field formats. For the title of a book, I also accept digits in
+the name because they can have, for example, "Morometii 2"; similarly, digits are allowed in the username
+during registration.
 
-For the add_book command, I created the JSON in the format written in Postman in the body using functions from parson.h and sent it as an argument for char **body_data in compute_post_request.
-
-In the get_books command, I use the function char *get_array_from_response(char *str) because in case of success, get_books returns an array of JSONs, which I save in char *carti, which I then parse with parson.h to display in a more readable format if the user enters the get-books command. I do the same for the get_book command, but it is for a single JSON, not an array of JSONs.
-
-I use the function char *get_json_from_response(char *str) to find the string of the form "{...}" in the response using strstr to obtain what is inside the brackets and strndup to also return the brackets, so I can parse them later with parson.h. The function char *get_array_from_response(char *str) has similar code to get_json_from_response, but it returns the string of the form "[...]" from the response.
-
-For the logout command, besides calling the function void c_logout(char **cookies) (logging out is based on the session cookie), I have the next line in the if statement token = NULL to revoke access to the library. I do not clear the saved cookie because it is unnecessary. If you log out and then enter the library again, which is only done through the session cookie, it will not work even if I retain the old one, so it is unnecessary. When you log in again, it will be updated with the new one.
-
-In all the above functions, I use a corresponding compute function with the specified URL and content type (if POST), as shown in the code. Additionally, I display corresponding messages based on the HTTP code returned in the response, as explained for the register command.
-
-I used the function int is_numeric(char *str) to verify if a string represents a number, used when entering the ID to delete or obtain a book because the ID must be a positive number. I also used it when adding a book for the page_count.
-
-I used the function int contains_digits(char *str) for certain fields that cannot contain digits. For example, when adding a book, the author's name cannot contain digits, etc.
-
-If the format of a field is violated, the user will receive a guiding error message on the screen, having to re-enter the command and adhere to the field formats. For the title of a book, I also accept digits in the name because they can have, for example, "Morometii 2"; similarly, digits are allowed in the username during registration.
-
-Also, when logged in and a new login command is entered, I revoke access to the previous library so that the newly logged-in user does not have access to the previous user's library by setting token = NULL. In the case of a non-existent command, the user receives the message "Invalid command!!!".
-
-    
-
+Also, when logged in and a new login command is entered, I revoke access to the previous library so that
+the newly logged-in user does not have access to the previous user's library by setting token = NULL. In
+the case of a non-existent command, the user receives the message "Invalid command!!!".
